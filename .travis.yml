@@ -1,0 +1,23 @@
+sudo: required
+language: generic 
+services:
+  - docker
+
+before_install:
+  - docker build -t vladcoman/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true vladcoman/react-test npm test
+
+after_success:
+  - docker build -t vladcoman/multi-client ./client
+  - docker build -t vladcoman/multi-nginx ./nginx
+  - docker build -t vladcoman/multi-server ./server
+  - docker build -t vladcoman/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push vladcoman/multi-client
+  - docker push vladcoman/multi-nginx
+  - docker push vladcoman/multi-server
+  - docker push vladcoman/multi-worker
